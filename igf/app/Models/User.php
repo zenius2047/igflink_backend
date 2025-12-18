@@ -57,8 +57,23 @@ class User extends Authenticatable
         return $this->belongsToMany(District::class, 'user_district', 'user_id', 'district_id');
     }
 
-    public function notificationSetting()
+    public function roles()
     {
-        return $this->hasOne(NotificationSetting::class);
+        return $this->belongsToMany(Role::class, 'user_roles');
+    }
+
+     public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function hasRole(string $roleName): bool
+    {
+        return $this->roles()->where('name', $roleName)->exists();
+    }
+
+    public function belongsToDistrict($districtId): bool
+    {
+        return $this->districts()->where('id', $districtId)->exists();
     }
 }

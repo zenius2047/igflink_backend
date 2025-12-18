@@ -11,13 +11,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('user_district', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('district_id')->nullable(); 
-            $table->unsignedBigInteger('user_id')->nullable();
-            $table->foreign('district_id')->references('id')->on('district')->onDelete('set null');
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('set null');
-            $table->timestamps();
+        Schema::create('district_user', function (Blueprint $table) {
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('district_id');
+
+            $table->primary(['user_id', 'district_id']);
+
+            $table->foreign('user_id')
+                ->references('id')
+                ->on('users')
+                ->cascadeOnDelete();
+
+             $table->foreign('district_id')
+                ->references('id')
+                ->on('districts')
+                ->cascadeOnDelete();
         });
     }
 

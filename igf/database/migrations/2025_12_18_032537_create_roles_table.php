@@ -11,12 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('district', function (Blueprint $table) {
+        Schema::create('roles', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 100);
-            $table->string('code', 10)->unique();
-            $table->string('region', 100)->nullable();
-            $table->boolean('is_active')->default(true);
+            $table->string('name', 50)->unique();
             $table->timestamps();
         });
     }
@@ -26,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('district');
+        Schema::dropIfExists('roles');
     }
 };
