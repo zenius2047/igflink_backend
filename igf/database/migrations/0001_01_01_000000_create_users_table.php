@@ -18,14 +18,19 @@ return new class extends Migration
             $table->string('password', 255);
             $table->string('staff_id', 80)->unique();
             $table->string('phone', 32)->nullable();
-            $table->string('role', 50)->nullable();// FK to districts.id
+            // remove role
             $table->string('department', 100)->nullable();
             $table->string('otp', 10)->nullable();
             $table->timestamp('otp_created_at')->nullable();
             $table->timestamp('verified_at')->nullable();
             $table->string('avatar', 255)->nullable();
-            $table->timestamps();
             $table->boolean('is_active')->default(true);
+             $table->foreignId('created_by')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
+            $table->timestamps();
+            
         });
 
 

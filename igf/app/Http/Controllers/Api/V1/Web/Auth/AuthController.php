@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api\V1\Web\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Role;
+use App\Models\District;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
@@ -27,11 +29,12 @@ public function register(Request $request)
         'password'   => 'required|string|min:8|confirmed',
         'phone'      => 'required|string|max:32',
         'staff_id'   => 'required|string|max:80|unique:users',
-        'role'       => 'nullable|string|max:50',
         'department' => 'nullable|string|max:100',
+        'role'       => 'required|string|exists:roles,name',
+        'district_id'=> 'nullable|exists:districts,id',
     ]);
 
-    // Create the user and hash the password
+    // Create the user
     $user = User::create([
         'full_name'  => $validated['full_name'],
         'email'      => $validated['email'],
@@ -39,25 +42,32 @@ public function register(Request $request)
         'phone'      => $validated['phone'],
         'staff_id'   => $validated['staff_id'],
         'department' => $validated['department'] ?? null,
-        'role'       => $validated['role'] ?? null,
+        'created_by' => auth()->id(), 
     ]);
 
-    // Generate a password reset token
+    // Attach role
+    $role = Role::where('name', $validated['role'])->first();
+    $user->roles()->attach($role->id);
+
+    // Attach district if applicable
+    if (!empty($validated['district_id'])) {
+        $user->districts()->attach($validated['district_id']);
+    }
+
+    // Generate password reset token
     $token = Password::createToken($user);
     $resetUrl = config('app.frontend_url') . "/reset-password?token={$token}&email={$user->email}";
     $loginUrl = config('app.frontend_url') . "/login";
-   
-    // Send welcome SMS for collectors (local dev safe)
 
-    if ($user->role === 'collector') {
+    // Send SMS or email based on role
+    if ($role->name === 'collector') {
         $smsMessage = "Welcome to IGF Link, {$user->full_name}! "
-                    . "Your account has been created. Use your phone number to log in. click the link to login: {$loginUrl}";
+                    . "Your account has been created. Use your phone number to log in. Click here: {$loginUrl}";
         $this->sendSMS($user->phone, $smsMessage);
-    }else {
-        
-    // Send welcome email
+    } else {
         Mail::to($user->email)->send(new AuthMail($user->full_name, $resetUrl));
     }
+
     // Optional: create auth token immediately
     $authToken = $user->createToken('auth_token')->plainTextToken;
 
@@ -67,6 +77,7 @@ public function register(Request $request)
         'token'   => $authToken,
     ], 201);
 }
+
 
     /**
      * Login user
