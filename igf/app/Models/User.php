@@ -56,4 +56,9 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(District::class, 'user_district', 'user_id', 'district_id');
     }
+
+    public function notificationSetting()
+    {
+        return $this->hasOne(NotificationSetting::class);
+    }
 }

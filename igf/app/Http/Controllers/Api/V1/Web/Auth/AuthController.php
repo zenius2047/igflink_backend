@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
 use App\Mail\AuthMail;
+use App\Mail\ResetLinkMail;
 
 use GuzzleHttp\Client as GuzzleClient;
 use Twilio\Http\CurlClient;
@@ -19,45 +20,45 @@ class AuthController extends Controller
     /**
      * Register a new user
      */
-public function register(Request $request)
-{
-    $validated = $request->validate([
-        'full_name'  => 'required|string|max:150',
-        'email'      => 'required|string|email|max:255|unique:users',
-        'password'   => 'required|string|min:8|confirmed',
-        'phone'      => 'required|string|max:32',
-        'staff_id'   => 'required|string|max:80|unique:users',
-        'role'       => 'nullable|string|max:50',
-        'department' => 'nullable|string|max:100',
-    ]);
+    public function register(Request $request)
+    {
+        $validated = $request->validate([
+            'full_name'  => 'required|string|max:150',
+            'email'      => 'required|string|email|max:255|unique:users',
+            'password'   => 'required|string|min:8|confirmed',
+            'phone'      => 'required|string|max:32',
+            'staff_id'   => 'required|string|max:80|unique:users',
+            'role'       => 'nullable|string|max:50',
+            'department' => 'nullable|string|max:100',
+        ]);
 
     // Create the user and hash the password
-    $user = User::create([
-        'full_name'  => $validated['full_name'],
-        'email'      => $validated['email'],
-        'password'   => Hash::make($validated['password']),
-        'phone'      => $validated['phone'],
-        'staff_id'   => $validated['staff_id'],
-        'department' => $validated['department'] ?? null,
-        'role'       => $validated['role'] ?? null,
-    ]);
+        $user = User::create([
+            'full_name'  => $validated['full_name'],
+            'email'      => $validated['email'],
+            'password'   => Hash::make($validated['password']),
+            'phone'      => $validated['phone'],
+            'staff_id'   => $validated['staff_id'],
+            'department' => $validated['department'] ?? null,
+            'role'       => $validated['role'] ?? null,
+        ]);
 
-    // Generate a password reset token
-    $token = Password::createToken($user);
-    $resetUrl = config('app.frontend_url') . "/reset-password?token={$token}&email={$user->email}";
-    $loginUrl = config('app.frontend_url') . "/login";
-   
-    // Send welcome SMS for collectors (local dev safe)
+        // Generate a password reset token
+        $token = Password::createToken($user);
+        $resetUrl = config('app.frontend_url') . "/reset-password?token={$token}&email={$user->email}";
+        $loginUrl = config('app.frontend_url') . "/login";
+    
+        // Send welcome SMS for collectors (local dev safe)
 
-    if ($user->role === 'collector') {
-        $smsMessage = "Welcome to IGF Link, {$user->full_name}! "
-                    . "Your account has been created. Use your phone number to log in. click the link to login: {$loginUrl}";
-        $this->sendSMS($user->phone, $smsMessage);
-    }else {
+        if ($user->role === 'collector') {
+            $smsMessage = "Welcome to IGF Link, {$user->full_name}! "
+                        . "Your account has been created. Use your phone number to log in. click the link to login: {$loginUrl}";
+            $this->sendSMS($user->phone, $smsMessage);
+        }else {
         
     // Send welcome email
         Mail::to($user->email)->send(new AuthMail($user->full_name, $resetUrl));
-    }
+        }
     // Optional: create auth token immediately
     $authToken = $user->createToken('auth_token')->plainTextToken;
 
@@ -110,8 +111,122 @@ public function register(Request $request)
         return response()->json($request->user());
     }
 
+    public function forgotPassword(Request $request)
+    {
+    $request->validate([
+        'email' => 'required|string|email',
+    ]);
 
-   private function sendSMS($phoneNumber, $message)
+    $user = User::where('email', $request->email)->first();
+
+    if (!$user) {
+        return response()->json([
+            'message' => 'User not found'
+        ], 404);
+    }
+
+    // Generate reset token
+    $token = Password::createToken($user);
+
+    $resetUrl = config('app.frontend_url')
+        . "/reset-password?token={$token}&email={$user->email}";
+
+    // Send reset email
+    Mail::to($user->email)->send(
+        new ResetLinkMail($user->full_name, $resetUrl)
+    );
+
+    return response()->json([
+        'message' => 'Password reset link sent to your email'
+    ]);
+    }
+
+    
+    public function resetPassword(Request $request)
+    {
+    $request->validate([
+        'email'                 => 'required|string|email',
+        'token'                 => 'required|string',
+        'password'              => 'required|string|min:8|confirmed',
+    ]);
+
+    $status = Password::reset(
+        $request->only('email', 'password', 'password_confirmation', 'token'),
+        function ($user, $password) {
+            $user->password = Hash::make($password);
+            $user->save();
+        }
+    );
+
+    if ($status !== Password::PASSWORD_RESET) {
+        return response()->json([
+            'message' => 'Invalid or expired reset token'
+        ], 400);
+    }
+
+    return response()->json([
+        'message' => 'Password reset successful. You can now log in.'
+    ]);
+    }
+
+
+  
+
+    public function changePassword(Request $request)
+{
+    $request->validate([
+        'current_password'      => 'required|string',
+        'new_password'          => 'required|string|min:8|confirmed',
+    ]);
+
+    $user = $request->user();
+
+    if (!Hash::check($request->current_password, $user->password)) {
+        return response()->json([
+            'message' => 'Current password is incorrect'
+        ], 400);
+    }
+
+    $user->password = Hash::make($request->new_password);
+    $user->save();
+
+    return response()->json([
+        'message' => 'Password changed successfully'
+    ]);
+
+}
+
+public function updateProfile(Request $request){
+    $user = $request->user();
+
+    $validated = $request->validate([
+        'full_name'  => 'sometimes|required|string|max:150',
+        'avatar' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+    ]);
+
+    if (isset($validated['full_name'])) {
+        $user->full_name = $validated['full_name'];
+    }
+
+
+    $imageUrl =null;
+    // laravel file upload handling
+    if ($request->hasFile('avatar')) {
+        $file = $request->file('avatar');
+        $path = $file->store('avatars', 'public');
+        $imageUrl = asset('storage/' . $path);
+        $user->avatar = $imageUrl;
+    }
+
+    $user->save();
+
+    return response()->json([
+        'message' => 'Profile updated successfully',
+        'user'    => $user,
+    ]);
+}
+
+ private function sendSMS($phoneNumber, $message)
 {
     $apiKey   = env('MNOTIFY_SERVICE_API_KEY');
     $senderId = "IGF LINK";
@@ -169,5 +284,4 @@ public function register(Request $request)
 
     return false;
 }
-
 }
