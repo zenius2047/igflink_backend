@@ -24,7 +24,7 @@ return new class extends Migration
 
              $table->foreign('district_id')
                 ->references('id')
-                ->on('districts')
+                ->on('district')
                 ->cascadeOnDelete();
         });
     }

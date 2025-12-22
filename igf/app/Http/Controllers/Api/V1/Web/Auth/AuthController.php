@@ -99,7 +99,7 @@ public function register(Request $request)
         return response()->json([
             'message' => 'Login successful',
             'user'    => $user,
-            'token'   => $token,
+            'token'   => $token, 
         ]);
     }
 
