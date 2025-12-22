@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
 use App\Mail\AuthMail;
 use App\Mail\ResetLinkMail;
-
 use GuzzleHttp\Client as GuzzleClient;
 use Twilio\Http\CurlClient;
 
@@ -27,7 +26,7 @@ public function register(Request $request)
     $validated = $request->validate([
         'full_name'  => 'required|string|max:150',
         'email'      => 'required|string|email|max:255|unique:users',
-        'password'   => 'required|string|min:8|confirmed',
+        'password'   => 'required|string|min:8',
         'phone'      => 'required|string|max:32',
         'staff_id'   => 'required|string|max:80|unique:users',
         'department' => 'nullable|string|max:100',
@@ -119,7 +118,20 @@ public function register(Request $request)
      */
     public function me(Request $request)
     {
-        return response()->json($request->user());
+        $user = $request->user()->load('roles');
+        return response()->json([
+            'status' => 'success',
+            'user' =>[
+                'id'        => $user->id,
+                'full_name' => $user->full_name,
+                'email'     => $user->email,
+                'phone'     => $user->phone,
+                'staff_id'  => $user->staff_id,
+                'department'=> $user->department,
+                'avatar'    => $user->avatar,
+                'roles'     => $user->roles->pluck('name'),
+            ]
+        ]);
     }
 
     public function forgotPassword(Request $request)

@@ -11,7 +11,7 @@ return new class extends Migration {
             $table->id(); // Business ID (SERIAL PK)
 
             $table->foreignId('district_id')
-                  ->constrained('district')
+                  ->constrained('districts')
                   ->cascadeOnDelete(); // District
 
             $table->string('business_name', 200);
