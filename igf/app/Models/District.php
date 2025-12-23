@@ -14,6 +14,7 @@ class District extends Model
         'phone',
         'address',
         'region',
+        'is_active',
     ];
 
     public function users()

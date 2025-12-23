@@ -76,4 +76,9 @@ class User extends Authenticatable
     {
         return $this->districts()->where('id', $districtId)->exists();
     }
+
+    public function notificationSetting()
+    {
+        return $this->hasOne(NotificationSetting::class);
+    }
 }

@@ -10,14 +10,23 @@ use Illuminate\Http\Request;
 
 class DistrictController extends Controller
 {
-    public function index()
-    {
-        $districts = District::all();
-        return response()->json([
-            'status' => 'success',
-            'data' => DistrictResource::collection($districts)
-        ], 200);
-    }
+   public function index(Request $request)
+{
+    $perPage = $request->get('per_page', 10); // default: 10
+
+    $districts = District::paginate($perPage);
+
+    return response()->json([
+        'status' => 'success',
+        'data' => DistrictResource::collection($districts),
+        'meta' => [
+            'current_page' => $districts->currentPage(),
+            'last_page' => $districts->lastPage(),
+            'per_page' => $districts->perPage(),
+            'total' => $districts->total(),
+        ]
+    ], 200);
+}
 
   public function store(Request $request)
 {
@@ -42,6 +51,7 @@ class DistrictController extends Controller
         'phone'   => $validated['phone'] ?? null,
         'address' => $validated['address'] ?? null,
         'region'  => $validated['region'] ?? null,
+        'is_active' => true,
     ]);
 
     // Return success response

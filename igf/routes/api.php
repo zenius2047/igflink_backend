@@ -19,7 +19,7 @@ Route::prefix('v1/auth')->middleware('guest:sanctum')->group(function(){
     });
 });
 
-Route::prefix('v1/auth')->middleware('auth:sanctum')->group(function () {
+Route::prefix('v1/profile')->middleware('auth:sanctum')->group(function () {
 
     Route::prefix('web')->group(function () {
         Route::post('logout', [WebAuthController::class, 'logout']);
@@ -28,7 +28,7 @@ Route::prefix('v1/auth')->middleware('auth:sanctum')->group(function () {
         Route::put('update-profile', [WebAuthController::class, 'updateProfile']);
 
         Route::get('notification-settings', [WebNotificationSettingController::class, 'show']);
-        Route::put('notification-settings', [WebNotificationSettingController::class, 'storeOrUpdate']);
+        Route::post('notification-settings', [WebNotificationSettingController::class, 'storeOrUpdate']);
     });
 
     Route::prefix('mobile')->group(function () {
@@ -50,7 +50,9 @@ Route::prefix('v1/finance')->middleware('auth:sanctum')->group(function(){
 });
 
 Route::prefix('v1/admin')->middleware('auth:sanctum')->group(function(){
+      Route::prefix('web')->group(function(){   
      Route::post('register', [WebAuthController::class, 'register']);
+      });
 });
 
 use App\Http\Controllers\Api\V1\Web\Super\DistrictController;
@@ -62,6 +64,7 @@ Route::prefix('v1/super-admin')->middleware(['auth:sanctum'])->group(function ()
         Route::post('/', [DistrictController::class, 'store']);
         Route::put('/{id}', [DistrictController::class, 'update']);
         Route::put('/{id}/toggle', [DistrictController::class, 'activateOrDeactivate']);
+        Route::get('/stats', [DistrictController::class, 'statistics']);
     });
 
     //District Admin Routes

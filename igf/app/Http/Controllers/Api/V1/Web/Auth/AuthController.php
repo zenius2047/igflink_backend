@@ -58,14 +58,15 @@ public function register(Request $request)
     $token = Password::createToken($user);
     $resetUrl = config('app.frontend_url') . "/reset-password?token={$token}&email={$user->email}";
     $loginUrl = config('app.frontend_url') . "/login";
+    $temproaryPassword = $validated['password'];
 
     // Send SMS or email based on role
     if ($role->name === 'collector') {
         $smsMessage = "Welcome to IGF Link, {$user->full_name}! "
-                    . "Your account has been created. Use your phone number to log in. Click here: {$loginUrl}";
+                    . "Your account has been created. Use your phone number to log in";
         $this->sendSMS($user->phone, $smsMessage);
     } else {
-        Mail::to($user->email)->send(new AuthMail($user->full_name, $resetUrl));
+        Mail::to($user->email)->send(new AuthMail($user->full_name, $resetUrl,$temproaryPassword,$loginUrl ));
     }
 
     // Optional: create auth token immediately
@@ -188,6 +189,7 @@ public function register(Request $request)
     }
 
     return response()->json([
+        'success' => true,
         'message' => 'Password reset successful. You can now log in.'
     ]);
     }

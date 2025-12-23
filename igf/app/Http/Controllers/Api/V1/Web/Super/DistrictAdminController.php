@@ -16,17 +16,28 @@ use Illuminate\Http\Request;
 class DistrictAdminController extends Controller
 {
     //
-    public function index()
-    {
-        $districtAdmins = User::whereHas('roles', function ($query) {
-            $query->where('name', 'district_admin');
-        })->with('districts')->get();
+public function index(Request $request)
+{
+    $perPage = $request->get('per_page', 10); // default 10 per page
 
-        return response()->json([
-            'status' => 'success',
-            'data' => DistrictAdminResource::collection($districtAdmins)
-        ], 200);
-    }
+    $districtAdmins = User::whereHas('roles', function ($query) {
+            $query->where('name', 'district_admin');
+        })
+        ->with('districts')
+        ->paginate($perPage);
+
+    return response()->json([
+        'status' => 'success',
+        'data' => DistrictAdminResource::collection($districtAdmins),
+        'meta' => [
+            'current_page' => $districtAdmins->currentPage(),
+            'last_page' => $districtAdmins->lastPage(),
+            'per_page' => $districtAdmins->perPage(),
+            'total' => $districtAdmins->total(),
+        ],
+    ], 200);
+}
+
 
     public function store(Request $request)
     {
@@ -62,8 +73,10 @@ class DistrictAdminController extends Controller
         $token = Password::createToken($user);
 
         $resetUrl = config('app.frontend_url') . "/reset-password?token={$token}&email={$user->email}";
+        $loginUrl = config('app.frontend_url') . "/login";
+        $temproaryPassword = $validated['password'];
         // send email notification to the district admin with login details (optional)
-        Mail::to($user->email)->send(new DistrictAdminCreate($user->districts()->first()->name, $resetUrl, $validated['password'])); 
+        Mail::to($user->email)->send(new DistrictAdminCreate($user->districts()->first()->name, $resetUrl, $temproaryPassword, $loginUrl)); 
         
         return response()->json([
             'status' => 'success',
@@ -128,4 +141,6 @@ public function update(Request $request, $id)
             'data'   => DistrictAdminResource::make($districtAdmin)
         ], 200);
         }
+
+   
 }
