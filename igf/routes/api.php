@@ -5,6 +5,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\web\Auth\AuthController as WebAuthController;
 use App\Http\Controllers\Api\V1\web\NotificationSettingController as WebNotificationSettingController;
 use App\Http\Controllers\Api\V1\Web\Super\DistrictAdminController;
+use App\Http\Controllers\Api\V1\Web\Super\AdminAccounts;
+use App\Http\Controllers\Api\V1\Web\Super\DistrictController;
+use App\Http\Controllers\Api\V1\Web\Super\PackagesController;
+use App\Http\Controllers\Api\V1\Web\Super\SubscriptionController;   
 
 Route::prefix('v1/auth')->middleware('guest:sanctum')->group(function(){
     Route::prefix('web')->group(function(){      
@@ -55,9 +59,16 @@ Route::prefix('v1/admin')->middleware('auth:sanctum')->group(function(){
       });
 });
 
-use App\Http\Controllers\Api\V1\Web\Super\DistrictController;
+
 
 Route::prefix('v1/super-admin')->middleware(['auth:sanctum'])->group(function () {
+    // super admin create admin accounts
+    Route::prefix('admin-accounts')->group(function () {
+        Route::get('/', [AdminAccounts::class, 'index']);
+        Route::post('/register', [AdminAccounts::class, 'register']);
+        Route::put('/{id}/toggle', [AdminAccounts::class, 'activateOrDeactivate']);
+    });
+   
       //District Routes
     Route::prefix('districts')->group(function () {
         Route::get('/', [DistrictController::class, 'index']);
@@ -74,6 +85,24 @@ Route::prefix('v1/super-admin')->middleware(['auth:sanctum'])->group(function ()
         Route::get('/{id}', [DistrictAdminController::class, 'show']);
         Route::put('/{id}', [DistrictAdminController::class, 'update']);
         Route::put('/{id}/toggle', [DistrictAdminController::class, 'activateOrDeactivate']);
+    });
+
+    // Packages routes
+    Route::prefix('packages')->group(function(){
+        Route::get('/', [PackagesController::class, 'index']);
+        Route::post('/',  [PackagesController::class, 'store']);
+        Route::put('/{id}',  [PackagesController::class, 'update']);
+         Route::delete('/{id}/delete',  [PackagesController::class, 'destroy']);
+    });
+
+    // Subscriptions routes
+    Route::prefix('subscriptions')->group(function(){
+        Route::get('/', [SubscriptionController::class, 'index']);
+        Route::post('/',  [SubscriptionController::class, 'store']);
+        Route::put('/{id}',  [SubscriptionController::class, 'update']);
+        Route::put('/{id}/toggle-package',  [SubscriptionController::class, 'togglePackageStatus']);
+        Route::get('/stats', [SubscriptionController::class, 'statistics']);
+     
     });
 });
 

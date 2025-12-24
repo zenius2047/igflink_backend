@@ -26,4 +26,10 @@ class District extends Model
     {
         return $this->hasMany(RegisteredBusiness::class);
     }   
+
+        public function subscription()
+    {
+        return $this->hasOne(Subscription::class);
+    }
+
 }

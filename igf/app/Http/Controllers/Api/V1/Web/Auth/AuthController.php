@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
 use App\Mail\AuthMail;
 use App\Mail\ResetLinkMail;
+use App\Http\Resources\UserResource;    
 use GuzzleHttp\Client as GuzzleClient;
 use Twilio\Http\CurlClient;
 
@@ -99,7 +100,7 @@ public function register(Request $request)
 
         return response()->json([
             'message' => 'Login successful',
-            'user'    => $user,
+            'user'    => new UserResource($user),
             'token'   => $token, 
         ]);
     }
@@ -122,16 +123,7 @@ public function register(Request $request)
         $user = $request->user()->load('roles');
         return response()->json([
             'status' => 'success',
-            'user' =>[
-                'id'        => $user->id,
-                'full_name' => $user->full_name,
-                'email'     => $user->email,
-                'phone'     => $user->phone,
-                'staff_id'  => $user->staff_id,
-                'department'=> $user->department,
-                'avatar'    => $user->avatar,
-                'roles'     => $user->roles->pluck('name'),
-            ]
+            'user' => new UserResource($user),
         ]);
     }
 
