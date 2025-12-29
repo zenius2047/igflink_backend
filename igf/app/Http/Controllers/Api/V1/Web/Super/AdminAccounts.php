@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Role;
 use App\Mail\AuthMail;
+use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
@@ -21,11 +22,12 @@ class AdminAccounts extends Controller
     $admins = User::whereHas('roles', function ($query) {
             $query->where('name', 'super_admin');
         })
+        ->with('roles', 'districts')
         ->paginate($perPage);
 
     return response()->json([
         'status' => 'success',
-        'data' => $admins->items(),
+        'data' => UserResource::collection($admins->getCollection()),
         'meta' => [
             'current_page' => $admins->currentPage(),
             'last_page' => $admins->lastPage(),

@@ -8,7 +8,8 @@ use App\Http\Controllers\Api\V1\Web\Super\DistrictAdminController;
 use App\Http\Controllers\Api\V1\Web\Super\AdminAccounts;
 use App\Http\Controllers\Api\V1\Web\Super\DistrictController;
 use App\Http\Controllers\Api\V1\Web\Super\PackagesController;
-use App\Http\Controllers\Api\V1\Web\Super\SubscriptionController;   
+use App\Http\Controllers\Api\V1\Web\Super\SubscriptionController;  
+use App\Http\Controllers\Api\V1\Web\Admin\DistrictUsersController; 
 
 Route::prefix('v1/auth')->middleware('guest:sanctum')->group(function(){
     Route::prefix('web')->group(function(){      
@@ -56,6 +57,8 @@ Route::prefix('v1/finance')->middleware('auth:sanctum')->group(function(){
 Route::prefix('v1/admin')->middleware('auth:sanctum')->group(function(){
       Route::prefix('web')->group(function(){   
      Route::post('register', [WebAuthController::class, 'register']);
+     Route::get('district-users/{districtId}/stats', [DistrictUsersController::class, 'stats']);
+     Route::get('/users/by-district', [DistrictUsersController::class, 'usersByDistrict']);
       });
 });
 
@@ -110,3 +113,6 @@ Route::prefix('v1/super-admin')->middleware(['auth:sanctum'])->group(function ()
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
+
+
+
