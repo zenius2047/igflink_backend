@@ -51,5 +51,20 @@ class DistrictUsersController extends Controller
         'total_users'  => $users->total(),
         'users'        => UserResource::collection($users),
     ]);
-}   
 }
+
+    //activate or deactivate a user
+    public function activateOrDeactivate($id)
+    {
+        $user = User::findOrFail($id);
+        $user->is_active = !$user->is_active;
+        $user->save();
+
+        return response()->json([
+            'message' => 'User ' . ($user->is_active ? 'activated' : 'deactivated') . ' successfully.',
+            'user' => new UserResource($user)
+        ]);
+    }
+}
+
+

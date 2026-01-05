@@ -59,6 +59,7 @@ Route::prefix('v1/admin')->middleware('auth:sanctum')->group(function(){
      Route::post('register', [WebAuthController::class, 'register']);
      Route::get('district-users/{districtId}/stats', [DistrictUsersController::class, 'stats']);
      Route::get('/users/by-district/{districtId}', [DistrictUsersController::class, 'usersByDistrict']);
+     Route::put('users/{id}/toggle', [DistrictUsersController::class, 'activateOrDeactivate']);
       });
 });
 
