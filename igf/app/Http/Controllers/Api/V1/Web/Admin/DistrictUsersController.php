@@ -40,11 +40,6 @@ class DistrictUsersController extends Controller
         //list users in a district 
     public function usersByDistrict($districtId)
 {
-    $request->validate([
-        'district_id' => 'required|exists:districts,id',
-    ]);
-
-    $districtId = $request->input('district_id');
 
     $users = User::with('roles')
         ->whereHas('districts', function($query) use ($districtId) {
