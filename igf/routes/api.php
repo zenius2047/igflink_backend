@@ -10,6 +10,9 @@ use App\Http\Controllers\Api\V1\Web\Super\DistrictController;
 use App\Http\Controllers\Api\V1\Web\Super\PackagesController;
 use App\Http\Controllers\Api\V1\Web\Super\SubscriptionController;  
 use App\Http\Controllers\Api\V1\Web\Admin\DistrictUsersController; 
+use App\Http\Controllers\Api\V1\Web\Admin\PropertyRateController;
+
+
 
 Route::prefix('v1/auth')->middleware('guest:sanctum')->group(function(){
     Route::prefix('web')->group(function(){      
@@ -54,13 +57,30 @@ Route::prefix('v1/finance')->middleware('auth:sanctum')->group(function(){
 
 });
 
+
+
+
+
 Route::prefix('v1/admin')->middleware('auth:sanctum')->group(function(){
       Route::prefix('web')->group(function(){   
      Route::post('register', [WebAuthController::class, 'register']);
      Route::get('district-users/{districtId}/stats', [DistrictUsersController::class, 'stats']);
      Route::get('/users/by-district/{districtId}', [DistrictUsersController::class, 'usersByDistrict']);
      Route::put('users/{id}/toggle', [DistrictUsersController::class, 'activateOrDeactivate']);
-      });
+     Route::put('users/{id}/change-role', [DistrictUsersController::class, 'changeUserRole']);  
+    Route::delete('users/{id}/remove-role', [DistrictUsersController::class, 'removeUserRole']);
+
+
+
+    Route::prefix('properties')->group(function(){
+        Route::get('stats', [PropertyRateController::class, 'stats']);
+        Route::put('/{id}/update', [PropertyRateController::class, 'update']);
+        Route::post('/', [PropertyRateController::class, 'store']);
+        Route::get('/', [PropertyRateController::class, 'index']);
+        Route::post('/{id}/payment', [PropertyRateController::class, 'recordPayment']);
+    });
+    
+});
 });
 
 
@@ -111,9 +131,7 @@ Route::prefix('v1/super-admin')->middleware(['auth:sanctum'])->group(function ()
 });
 
 
+
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
-
-
-
